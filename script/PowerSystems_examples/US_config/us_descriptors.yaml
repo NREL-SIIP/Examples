@@ -27,8 +27,15 @@ dc_branch:
 - {custom_name: from_bus_id, name: connection_points_from}
 - {custom_name: to_bus_id, name: connection_points_to}
 - {custom_name: Pmax, name: mw_load}
-- {custom_name: loss1, name: loss}
-- {custom_name: control_mode, name: control_mode}
+- {custom_name: Pmin, name: min_active_power_limit_from}
+- {custom_name: Pmax, name: max_active_power_limit_from}
+- {custom_name: Pmin, name: min_active_power_limit_to}
+- {custom_name: Pmax, name: max_active_power_limit_to}
+- {custom_name: QminF, name: min_reactive_power_limit_from}
+- {custom_name: QmaxF, name: max_reactive_power_limit_from}
+- {custom_name: QminT, name: min_reactive_power_limit_to}
+- {custom_name: QmaxT, name: max_reactive_power_limit_to}
+
 generator:
 - {custom_name: name, name: name}
 - {custom_name: bus_id, name: bus_id}

@@ -60,7 +60,7 @@ initial_time = ZonedDateTime(DateTime("2016-01-01T00:00:00"), timezone)
 @info "formatting data ..."
 !isnothing(interconnect) && @info "filtering data to include $interconnect ..."
 gen = DataFrame(CSV.File(joinpath(datadir, "plant.csv")))
-filter!(row -> row[:interconnect] == interconnect, gen)
+!isnothing(interconnect) && filter!(row -> row[:interconnect] == interconnect, gen)
 gencost = DataFrame(CSV.File(joinpath(datadir, "gencost.csv")))
 gen = innerjoin(gen, gencost, on = :plant_id, makeunique = true, validate = (false, false))
 
@@ -163,7 +163,6 @@ dcbranch = DataFrame(CSV.File(joinpath(datadir, "dcline.csv")))
 !isnothing(interconnect) && filter!(row -> row[:from_bus_id] in bus.bus_id, dcbranch)
 !isnothing(interconnect) && filter!(row -> row[:to_bus_id] in bus.bus_id, dcbranch)
 dcbranch.name = "dcbranch" .* string.(dcbranch.dcline_id)
-dcbranch[:, :control_mode] .= "Power"
 CSV.write(joinpath(siip_data, "dc_branch.csv"), dcbranch)
 
 # ### We need to create a reference for where to get timeseries data for each component.
@@ -213,9 +212,12 @@ for f in ts_csv
                 Dict(
                     "simulation" => "DA",
                     "category" => category,
+                    "type" => "Deterministic",
+                    "label" => replace(label, "get_"=>""),
                     "component_name" => String(colname),
-                    "label" => label,
-                    "scaling_factor" => sf,
+                    "scaling_factor_multiplier" => label,
+                    "scaling_factor_multiplier_module" => "PowerSystems",
+                    "normalization_factor" => sf,
                     "data_file" => csvpath,
                 ),
             )
@@ -226,7 +228,7 @@ end
 
 timeseries_pointers = joinpath(siip_data, "timeseries_pointers.json")
 open(timeseries_pointers, "w") do io
-    PowerSystems.InfrastructureSystems.JSON2.write(io, timeseries)
+    JSON2.write(io, timeseries)
 end
 
 # ### The tabular data format relies on a folder containing `*.csv` files and `.yaml` files
@@ -244,8 +246,8 @@ rawsys = PowerSystems.PowerSystemTableData(
 # ### Create a `System`
 # Next, we'll create a `System` from the `rawsys` data. Since a `System` is predicated on a
 # forecast resolution and the `rawsys` data includes both 5-minute and 1-hour resolution
-# forecasts, we also need to specify which forecasts we want to include in the `System`.
-# The `forecast_resolution` kwarg filters to only include forecasts with a matching resolution.
+# time series, we also need to specify which time series we want to include in the `System`.
+# The `forecast_resolution` kwarg filters to only include time series with a matching resolution.
 
 @info "creating System"
 sys = System(rawsys; config_path = joinpath(config_dir, "us_system_validation.json"));
